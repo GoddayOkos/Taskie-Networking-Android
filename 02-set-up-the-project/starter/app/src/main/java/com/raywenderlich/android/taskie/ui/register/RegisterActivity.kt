@@ -36,6 +36,7 @@ package com.raywenderlich.android.taskie.ui.register
 
 import android.net.ConnectivityManager
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.raywenderlich.android.taskie.R
 import com.raywenderlich.android.taskie.model.request.UserDataRequest
@@ -80,6 +81,7 @@ class RegisterActivity : AppCompatActivity() {
               onRegisterSuccess()
             } else if (error != null) {
               onRegisterError()
+              Log.e("RegisterActivity", error.message, error)
             }
           }
         }
