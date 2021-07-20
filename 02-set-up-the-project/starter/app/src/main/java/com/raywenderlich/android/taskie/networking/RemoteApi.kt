@@ -34,7 +34,6 @@
 
 package com.raywenderlich.android.taskie.networking
 
-import android.util.Log
 import com.google.gson.Gson
 import com.raywenderlich.android.taskie.App
 import com.raywenderlich.android.taskie.model.Task
@@ -174,7 +173,7 @@ class RemoteApi {
 
                     val tasksResponse =
                         gson.fromJson(response.toString(), GetTasksResponse::class.java)
-                    onTasksReceived(tasksResponse.notes, null)
+                    onTasksReceived(tasksResponse.notes.filter { !it.isCompleted }, null)
                 }
             } catch (error: Throwable) {
                 onTasksReceived(emptyList(), error)
@@ -188,8 +187,38 @@ class RemoteApi {
         onTaskDeleted(null)
     }
 
-    fun completeTask(onTaskCompleted: (Throwable?) -> Unit) {
-        onTaskCompleted(null)
+    fun completeTask(taskId: String, onTaskCompleted: (Throwable?) -> Unit) {
+        Thread {
+            val connection = URL("$BASE_URL/api/note/complete?id=$taskId").openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("Authorization", App.getToken())
+            connection.readTimeout = 10000
+            connection.connectTimeout = 10000
+            connection.doOutput = true
+            connection.doInput = true
+
+            try {
+                val reader = InputStreamReader(connection.inputStream)
+
+                reader.use { input ->
+                    val response = StringBuilder()
+                    val bufferedReader = BufferedReader(input)
+
+                    bufferedReader.useLines { lines ->
+                        lines.forEach {
+                            response.append(it.trim())
+                        }
+                    }
+                    onTaskCompleted(null)
+                }
+            } catch (error: Throwable) {
+                onTaskCompleted(error)
+            }
+
+            connection.disconnect()
+        }.start()
     }
 
     fun addTask(addTaskRequest: AddTaskRequest, onTaskCreated: (Task?, Throwable?) -> Unit) {
@@ -221,15 +250,16 @@ class RemoteApi {
                         }
                     }
 
-                    val jsonObject = JSONObject(response.toString())
+//                    val jsonObject = JSONObject(response.toString())
+//                    Task(
+//                        jsonObject.getString("id"),
+//                        jsonObject.getString("title"),
+//                        jsonObject.getString("content"),
+//                        jsonObject.getBoolean("isCompleted"),
+//                        jsonObject.getInt("taskPriority")
+//                    )
 
-                    val task = Task(
-                        jsonObject.getString("id"),
-                        jsonObject.getString("title"),
-                        jsonObject.getString("content"),
-                        jsonObject.getBoolean("isCompleted"),
-                        jsonObject.getInt("taskPriority")
-                    )
+                    val task = gson.fromJson(response.toString(), Task::class.java)
 
                     onTaskCreated(task, null)
                 }
