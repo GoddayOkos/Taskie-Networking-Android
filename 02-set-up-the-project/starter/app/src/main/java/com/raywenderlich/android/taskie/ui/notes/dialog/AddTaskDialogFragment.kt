@@ -117,13 +117,11 @@ class AddTaskDialogFragment : DialogFragment() {
 
     networkStatusChecker.performIfConnectedToInternet {
       remoteApi.addTask(AddTaskRequest(title, content, priority)) { task, error ->
-        activity?.runOnUiThread {
           if (task != null) {
             onTaskAdded(task)
           } else if (error != null) {
             onTaskAddFailed()
           }
-        }
       }
         clearUi()
     }
