@@ -34,7 +34,6 @@
 
 package com.raywenderlich.android.taskie.networking
 
-import com.raywenderlich.android.taskie.App
 import com.raywenderlich.android.taskie.model.*
 import com.raywenderlich.android.taskie.model.request.AddTaskRequest
 import com.raywenderlich.android.taskie.model.request.UserDataRequest
@@ -89,7 +88,7 @@ class RemoteApi(private val apiService: RemoteApiService) {
     }
 
     fun getTasks(onTasksReceived: (Result<List<Task>>) -> Unit) {
-        apiService.getNotes(App.getToken()).enqueue(object : Callback<GetTasksResponse> {
+        apiService.getNotes().enqueue(object : Callback<GetTasksResponse> {
             override fun onFailure(call: Call<GetTasksResponse>, error: Throwable) {
                 onTasksReceived(Failure(error))
             }
@@ -106,12 +105,31 @@ class RemoteApi(private val apiService: RemoteApiService) {
         })
     }
 
-    fun deleteTask(onTaskDeleted: (Throwable?) -> Unit) {
-        onTaskDeleted(null)
+    fun deleteTask(noteId: String, onTaskDeleted: (Result<String>) -> Unit) {
+        apiService.deleteNote(noteId).enqueue(object : Callback<DeleteNoteResponse> {
+            override fun onResponse(
+                call: Call<DeleteNoteResponse>,
+                response: Response<DeleteNoteResponse>
+            ) {
+                val deleteNoteResponse = response.body()
+
+                if (deleteNoteResponse?.message == null) {
+                    onTaskDeleted(Failure(NullPointerException("No response!")))
+                } else {
+                    onTaskDeleted(Success(deleteNoteResponse.message))
+                }
+
+            }
+
+            override fun onFailure(call: Call<DeleteNoteResponse>, t: Throwable) {
+                onTaskDeleted(Failure(t))
+            }
+
+        })
     }
 
     fun completeTask(taskId: String, onTaskCompleted: (Throwable?) -> Unit) {
-        apiService.completeTask(App.getToken(), taskId).enqueue(object :
+        apiService.completeTask(taskId).enqueue(object :
             Callback<CompleteNoteResponse> {
             override fun onFailure(call: Call<CompleteNoteResponse>, error: Throwable) {
                 onTaskCompleted(error)
@@ -131,7 +149,7 @@ class RemoteApi(private val apiService: RemoteApiService) {
     }
 
     fun addTask(addTaskRequest: AddTaskRequest, onTaskCreated: (Result<Task>) -> Unit) {
-        apiService.addTask(App.getToken(), addTaskRequest).enqueue(object : Callback<Task> {
+        apiService.addTask(addTaskRequest).enqueue(object : Callback<Task> {
             override fun onFailure(call: Call<Task>, error: Throwable) {
                 onTaskCreated(Failure(error))
             }
@@ -158,7 +176,7 @@ class RemoteApi(private val apiService: RemoteApiService) {
             }
             val task = result as Success
 
-            apiService.getMyProfile(App.getToken()).enqueue(object : Callback<UserProfileResponse> {
+            apiService.getMyProfile().enqueue(object : Callback<UserProfileResponse> {
                 override fun onFailure(call: Call<UserProfileResponse>, error: Throwable) {
                     onUserProfileReceived(Failure(error))
                 }
