@@ -35,8 +35,7 @@
 package com.raywenderlich.android.taskie.networking
 
 import com.raywenderlich.android.taskie.App
-import com.raywenderlich.android.taskie.model.Task
-import com.raywenderlich.android.taskie.model.UserProfile
+import com.raywenderlich.android.taskie.model.*
 import com.raywenderlich.android.taskie.model.request.AddTaskRequest
 import com.raywenderlich.android.taskie.model.request.UserDataRequest
 import com.raywenderlich.android.taskie.model.response.*
@@ -52,19 +51,19 @@ const val BASE_URL = "https://taskie-rw.herokuapp.com"
 
 class RemoteApi(private val apiService: RemoteApiService) {
 
-    fun loginUser(userDataRequest: UserDataRequest, onUserLoggedIn: (String?, Throwable?) -> Unit) {
+    fun loginUser(userDataRequest: UserDataRequest, onUserLoggedIn: (Result<String>) -> Unit) {
         apiService.loginUser(userDataRequest).enqueue(object : Callback<LoginResponse> {
             override fun onFailure(call: Call<LoginResponse>, error: Throwable) {
-                onUserLoggedIn(null, error)
+                onUserLoggedIn(Failure(error))
             }
 
             override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                 val loginResponse = response.body()
 
                 if (loginResponse == null || loginResponse.token.isNullOrEmpty()) {
-                    onUserLoggedIn(null, NullPointerException("No response body!"))
+                    onUserLoggedIn(Failure(NullPointerException("No response body!")))
                 } else {
-                    onUserLoggedIn(loginResponse.token, null)
+                    onUserLoggedIn(Success(loginResponse.token))
                 }
             }
         })
