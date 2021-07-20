@@ -76,7 +76,6 @@ class RegisterActivity : AppCompatActivity() {
     if (username.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
       networkStatusChecker.performIfConnectedToInternet {
         remoteApi.registerUser(UserDataRequest(email, password, username)) { message, error ->
-          runOnUiThread {
             if (message != null) {
               toast(message)
               onRegisterSuccess()
@@ -84,7 +83,6 @@ class RegisterActivity : AppCompatActivity() {
               onRegisterError()
               Log.e("RegisterActivity", error.message, error)
             }
-          }
         }
       }
     } else {
