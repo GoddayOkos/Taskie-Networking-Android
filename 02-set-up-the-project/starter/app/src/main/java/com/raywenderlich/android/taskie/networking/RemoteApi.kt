@@ -38,6 +38,7 @@ import com.raywenderlich.android.taskie.model.Task
 import com.raywenderlich.android.taskie.model.UserProfile
 import com.raywenderlich.android.taskie.model.request.AddTaskRequest
 import com.raywenderlich.android.taskie.model.request.UserDataRequest
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -61,6 +62,35 @@ class RemoteApi {
           connection.connectTimeout = 10000
           connection.doOutput = true
           connection.doInput = true
+
+          val body = "{\"email\":\"${userDataRequest.email}\", \"password\":\"${userDataRequest.password}\"}"
+
+          val byte = body.toByteArray()
+
+          try {
+              connection.outputStream.use { outputStream ->
+                  outputStream.write(byte)
+              }
+
+              val reader = InputStreamReader(connection.inputStream)
+
+              reader.use { input ->
+                  val response = StringBuilder()
+                  val bufferedReader = BufferedReader(input)
+
+                  bufferedReader.useLines { lines ->
+                      lines.forEach {
+                          response.append(it.trim())
+                      }
+                  }
+                  val jsonObject = JSONObject(response.toString())
+                  val token = jsonObject.getString("token")
+
+                  onUserLoggedIn(token, null)
+              }
+          } catch (error: Throwable) {
+              onUserLoggedIn(null, error)
+          }
 
           connection.disconnect()
       }.start()
