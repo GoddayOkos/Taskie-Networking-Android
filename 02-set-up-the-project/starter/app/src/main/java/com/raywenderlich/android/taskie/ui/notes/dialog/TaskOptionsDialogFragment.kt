@@ -41,6 +41,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
+import com.raywenderlich.android.taskie.App
 import com.raywenderlich.android.taskie.R
 import com.raywenderlich.android.taskie.networking.NetworkStatusChecker
 import com.raywenderlich.android.taskie.networking.RemoteApi
@@ -52,7 +53,7 @@ import kotlinx.android.synthetic.main.fragment_dialog_task_options.*
 class TaskOptionsDialogFragment : DialogFragment() {
 
   private var taskOptionSelectedListener: TaskOptionSelectedListener? = null
-  private val remoteApi = RemoteApi()
+  private val remoteApi = App.remoteApi
   private val networkStatusChecker by lazy {
     NetworkStatusChecker(activity?.getSystemService(ConnectivityManager::class.java))
   }
