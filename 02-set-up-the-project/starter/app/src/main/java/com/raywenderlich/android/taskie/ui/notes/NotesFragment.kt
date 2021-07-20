@@ -107,16 +107,16 @@ class NotesFragment : Fragment(), AddTaskDialogFragment.TaskAddedListener,
   private fun getAllTasks() {
     progress.visible()
     networkStatusChecker.performIfConnectedToInternet {
-      activity?.runOnUiThread {
-    remoteApi.getTasks { tasks, error ->
-      if (tasks.isNotEmpty()) {
-        onTaskListReceived(tasks)
-      } else if (error != null) {
-        onGetTasksFailed()
+      remoteApi.getTasks { tasks, error ->
+        activity?.runOnUiThread {
+          if (tasks.isNotEmpty()) {
+            onTaskListReceived(tasks)
+          } else if (error != null) {
+            onGetTasksFailed()
+          }
+        }
       }
     }
-    }
-  }
   }
 
   private fun checkList(notes: List<Task>) {

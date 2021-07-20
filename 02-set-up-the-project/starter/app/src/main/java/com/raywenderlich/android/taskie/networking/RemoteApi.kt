@@ -34,6 +34,7 @@
 
 package com.raywenderlich.android.taskie.networking
 
+import android.util.Log
 import com.google.gson.Gson
 import com.raywenderlich.android.taskie.App
 import com.raywenderlich.android.taskie.model.Task
@@ -68,10 +69,7 @@ class RemoteApi {
             connection.doOutput = true
             connection.doInput = true
 
-            val requestJson = JSONObject()
-            requestJson.put("email", userDataRequest.email)
-            requestJson.put("password", userDataRequest.password)
-            val body = requestJson.toString()
+            val body = gson.toJson(userDataRequest)
 
             val byte = body.toByteArray()
 
@@ -118,11 +116,7 @@ class RemoteApi {
             connection.doOutput = true
             connection.doInput = true
 
-            val requestJson = JSONObject()
-            requestJson.put("name", userDataRequest.name)
-            requestJson.put("email", userDataRequest.email)
-            requestJson.put("password", userDataRequest.password)
-            val body = requestJson.toString()
+            val body = gson.toJson(userDataRequest)
 
             val bytes = body.toByteArray()
 
@@ -163,11 +157,11 @@ class RemoteApi {
             connection.setRequestProperty("Authorization", App.getToken())
             connection.readTimeout = 10000
             connection.connectTimeout = 10000
-            connection.doOutput = true
             connection.doInput = true
 
             try {
                 val reader = InputStreamReader(connection.inputStream)
+
                 reader.use { input ->
                     val response = StringBuilder()
                     val bufferedReader = BufferedReader(input)
@@ -178,11 +172,12 @@ class RemoteApi {
                         }
                     }
 
-                    val tasksResponse = gson.fromJson(response.toString(), GetTasksResponse::class.java)
-                    onTasksReceived(tasksResponse.notes ?: emptyList(), null)
+                    val tasksResponse =
+                        gson.fromJson(response.toString(), GetTasksResponse::class.java)
+                    onTasksReceived(tasksResponse.notes, null)
                 }
             } catch (error: Throwable) {
-                onTasksReceived(emptyList(), null)
+                onTasksReceived(emptyList(), error)
             }
 
             connection.disconnect()
@@ -209,14 +204,9 @@ class RemoteApi {
             connection.doOutput = true
             connection.doInput = true
 
-            val request = JSONObject()
-            request.put("title", addTaskRequest.title)
-            request.put("content", addTaskRequest.content)
-            request.put("taskPriority", addTaskRequest.taskPriority)
-
             try {
                 connection.outputStream.use { outputStream ->
-                    outputStream.write(request.toString().toByteArray())
+                    outputStream.write(gson.toJson(addTaskRequest).toByteArray())
                 }
 
                 val reader = InputStreamReader(connection.inputStream)
